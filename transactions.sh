@@ -8,13 +8,14 @@ function join {
 
 function printgold()
 {
-    local copper=$(("$1" % 100))
-    local silver=$(($(($(("$1" - "$copper")) / 100)) % 100))
-    local gold=$(($(($(($(("$1" - "$copper")) / 100)) - "$silver")) / 100))
+    local copper=$(($1 % 100))
+    local silver=$(($(($(($1 - $copper)) / 100)) % 100))
+    local gold=$(($(($(($(($1 - $copper)) / 100)) - $silver)) / 100))
 
-    [[ ${gold} -gt 0 ]] && echo -n "${gold}G "
-    [[ ${silver} -gt 0 ]] && echo -n "${silver}S "
-    echo "${copper}c"
+    [[ ${gold} -ne 0 ]] && printf "\e[33m%dg " "${gold}"
+    [[ ${silver} -ne 0 ]] && printf "\e[37m%ds " "${silver}"
+    [[ ${copper} -ne 0 ]] && printf "\e[31m%dc" "${copper}"
+    printf "\e[0m"
 }
 
 function getjson()
