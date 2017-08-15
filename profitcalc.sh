@@ -14,8 +14,8 @@ function printgold()
 
 function tocopper()
 {
-    gold=$(echo $1 | perl -ne '/(\d+)g/i && print "$1";')
-    silver=$(echo $1 | perl -ne '/(\d+)s/i && print "$1";')
+    gold=$(echo $1 | perl -ne '/([\d\.]+)g/i && print "$1";')
+    silver=$(echo $1 | perl -ne '/([\d\.]+)s/i && print "$1";')
     copper=$(echo $1 | perl -ne '/(\d+)c/i && print "$1";')
 
     if [ -z $gold ] && [ -z $silver ] && [ -z $copper ]; then
