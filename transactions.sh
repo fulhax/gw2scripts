@@ -12,9 +12,12 @@ function printgold()
     local silver=$(($(($(($1 - copper)) / 100)) % 100))
     local gold=$(($(($(($(($1 - copper)) / 100)) - silver)) / 100))
 
-    [[ $gold -ne 0 ]] && printf "\e[33m%dg " "$gold"
-    [[ $silver -ne 0 ]] && printf "\e[37m%ds " "$silver"
-    [[ $copper -ne 0 ]] && printf "\e[31m%dc" "$copper"
+    printf "\e[33m"
+    [[ $gold -ne 0 ]] && printf "%dg " "$gold"
+    printf "\e[37m"
+    [[ $silver -ne 0 ]] && printf "%ds " "$silver"
+    printf "\e[31m"
+    [[ $copper -ne 0 ]] && printf "%dc" "$copper"
     printf "\e[0m"
 }
 
@@ -51,12 +54,12 @@ function getSaleBuyList()
 
         thisprice=$((count * price))
 
-        printf "%-4s %-40s %-30s %-30s %-30s\n" \
+        printf "%-4s %-40s %-30s buyorder: %-30s sell: %-30s\n" \
             "${amount[$i]}x" \
             "$name" \
             "$(printgold "$thisprice")" \
-            "buyorder: $(printgold "$instantprice")" \
-            "sell: $(printgold "$slowprice")"
+            "$(printgold "$instantprice")" \
+            "$(printgold "$slowprice")"
 
         total=$((total + thisprice))
     done
