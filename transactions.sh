@@ -18,11 +18,6 @@ function printgold()
     printf "\e[0m"
 }
 
-function getjson()
-{
-    local regex="$2:[ ]\+\"\?\\([^\"]\\+\\)\"\?,"
-    echo "$1" | grep "$2" | sed -e "s/$regex/\1/" | sed -e 's/^ *//'
-}
 function getSaleBuyList()
 {
     echo "================================================================================"
@@ -30,38 +25,30 @@ function getSaleBuyList()
     echo "================================================================================"
     apikey=$(cat gw2apikey)
     buys=$(curl "https://api.guildwars2.com/v2/commerce/transactions/${1}?access_token=${apikey}" 2>/dev/null)
-    prices=($(getjson "${buys}" '"price"'))
-    amount=($(getjson "${buys}" '"quantity"'))
-    itemid=($(getjson "${buys}" '"item_id"'))
-
-    declare -A lookup
+    echo "$buys" > lastbuysfile
+    prices=($(echo "${buys}" | jq '.[].price'))
+    amount=($(echo "${buys}" | jq '.[].quantity'))
+    itemid=($(echo "${buys}" | jq '.[].item_id'))
 
     total=0
 
-    search=$(join , "${itemid[@]}")
+    search=$(join , $(echo "${itemid[@]}" | tr ' ' '\n' | sort -n -u | paste -sd' ' -))
     items=$(curl "https://api.guildwars2.com/v2/items?ids=$search" 2>/dev/null)
     pricelist=$(curl "https://api.guildwars2.com/v2/commerce/prices?ids=$search" 2>/dev/null)
-    #
     IFS=$'\n'
-    item=($(getjson "${items}" '"name"'))
-    id=($(getjson "${items}" '^    "id"'))
-    marketvalues=($(getjson "${pricelist}" "unit_price"))
-    marketid=($(getjson "${pricelist}" '"id"'))
-
-    for (( i = 0; i < "${#id[@]}"; i++ )); do
-        lookup+=( [${id[$i]}]=${item[$i]} )
-    done
 
     for (( i = 0; i < "${#itemid[@]}"; i++ )); do
         curr=${itemid[$i]}
-        name=${lookup[$curr]}
+        name=$(echo "$items" | jq -r ".[] | select(.id == $curr)| .name")
         count=${amount[$i]}
         price=${prices[$i]}
+        instantprice=$(echo "$pricelist" | jq -r ".[] | select(.id == $curr)| .buys.unit_price")
+        slowprice=$(echo "$pricelist" | jq -r ".[] | select(.id == $curr)| .sells.unit_price")
 
         thisprice=$((count * price))
 
-        printf "%-3s %-40s %-14s\n" \
-            "${amount[$i]}x" "$name" "$(printgold ${thisprice})"
+        printf "%-4s %-40s %-30s %-30s %-30s\n" \
+            "${amount[$i]}x" "$name" "$(printgold ${thisprice})" "buyorder:$(printgold ${instantprice})" "sell:$(printgold ${slowprice})"
 
         total=$((total + thisprice))
     done
