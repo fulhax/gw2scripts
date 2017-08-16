@@ -9,20 +9,20 @@ function join {
 function printgold()
 {
     local copper=$(($1 % 100))
-    local silver=$(($(($(($1 - $copper)) / 100)) % 100))
-    local gold=$(($(($(($(($1 - $copper)) / 100)) - $silver)) / 100))
+    local silver=$(($(($(($1 - copper)) / 100)) % 100))
+    local gold=$(($(($(($(($1 - copper)) / 100)) - silver)) / 100))
 
-    [[ ${gold} -ne 0 ]] && printf "\e[33m%dg " "${gold}"
-    [[ ${silver} -ne 0 ]] && printf "\e[37m%ds " "${silver}"
-    [[ ${copper} -ne 0 ]] && printf "\e[31m%dc" "${copper}"
+    [[ $gold -ne 0 ]] && printf "\e[33m%dg " "$gold"
+    [[ $silver -ne 0 ]] && printf "\e[37m%ds " "$silver"
+    [[ $copper -ne 0 ]] && printf "\e[31m%dc" "$copper"
     printf "\e[0m"
 }
 
 function getSaleBuyList()
 {
-    echo "================================================================================"
-    echo $1
-    echo "================================================================================"
+    l="$(printf "=%.0s" {1..80})"
+    printf "%s\n%s\n%s\n" "$l" "$1" "$l"
+
     apikey=$(cat gw2apikey)
     buys=$(curl "https://api.guildwars2.com/v2/commerce/transactions/${1}?access_token=${apikey}" 2>/dev/null)
     echo "$buys" > lastbuysfile
@@ -32,7 +32,8 @@ function getSaleBuyList()
 
     total=0
 
-    search=$(echo "${itemid[@]}" | tr ' ' '\n' | sort -n -u | paste -sd',' -)
+    search=$(join , "${itemid[@]}" | uniq)
+
     items=$(curl "https://api.guildwars2.com/v2/items?ids=$search" 2>/dev/null)
     pricelist=$(curl "https://api.guildwars2.com/v2/commerce/prices?ids=$search" 2>/dev/null)
     IFS=$'\n'
@@ -42,13 +43,20 @@ function getSaleBuyList()
         name=$(echo "$items" | jq -r ".[] | select(.id == $curr)| .name")
         count=${amount[$i]}
         price=${prices[$i]}
-        instantprice=$(echo "$pricelist" | jq -r ".[] | select(.id == $curr)| .buys.unit_price")
-        slowprice=$(echo "$pricelist" | jq -r ".[] | select(.id == $curr)| .sells.unit_price")
+
+        instantprice=$(echo "$pricelist" | \
+                jq -r ".[] | select(.id == $curr)| .buys.unit_price")
+        slowprice=$(echo "$pricelist" | \
+                jq -r ".[] | select(.id == $curr)| .sells.unit_price")
 
         thisprice=$((count * price))
 
         printf "%-4s %-40s %-30s %-30s %-30s\n" \
-            "${amount[$i]}x" "$name" "$(printgold ${thisprice})" "buyorder:$(printgold ${instantprice})" "sell:$(printgold ${slowprice})"
+            "${amount[$i]}x" \
+            "$name" \
+            "$(printgold "$thisprice")" \
+            "buyorder: $(printgold "$instantprice")" \
+            "sell: $(printgold "$slowprice")"
 
         total=$((total + thisprice))
     done
@@ -63,6 +71,8 @@ function printhelp
     echo "-s = show sales/for sale"
     echo "-b = show bought/buy orders"
 }
+
+[[ $# -eq 0 ]] && printhelp
 
 scope="history"
 while getopts "hcsb" c;do
