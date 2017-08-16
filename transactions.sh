@@ -32,7 +32,7 @@ function getSaleBuyList()
 
     total=0
 
-    search=$(join , $(echo "${itemid[@]}" | tr ' ' '\n' | sort -n -u | paste -sd' ' -))
+    search=$(echo "${itemid[@]}" | tr ' ' '\n' | sort -n -u | paste -sd',' -)
     items=$(curl "https://api.guildwars2.com/v2/items?ids=$search" 2>/dev/null)
     pricelist=$(curl "https://api.guildwars2.com/v2/commerce/prices?ids=$search" 2>/dev/null)
     IFS=$'\n'
