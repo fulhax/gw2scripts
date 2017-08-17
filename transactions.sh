@@ -48,16 +48,16 @@ function getSaleBuyList()
         price=${prices[$i]}
 
         instantprice=$(echo "$pricelist" | \
-                jq -r ".[] | select(.id == $curr)| .buys.unit_price")
+            jq -r ".[] | select(.id == $curr)| .buys.unit_price")
         slowprice=$(echo "$pricelist" | \
-                jq -r ".[] | select(.id == $curr)| .sells.unit_price")
+            jq -r ".[] | select(.id == $curr)| .sells.unit_price")
 
         thisprice=$((count * price))
-
-        printf "%-4s %-40s %-30s buyorder: %-30s sell: %-30s\n" \
+        printf "%-4s %-40s %-30s each:%-30s buyorder: %-30s sell: %-30s\n" \
             "${amount[$i]}x" \
             "$name" \
             "$(printgold "$thisprice")" \
+            "$(printgold "$price")" \
             "$(printgold "$instantprice")" \
             "$(printgold "$slowprice")"
 
