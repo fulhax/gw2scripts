@@ -11,13 +11,12 @@ function printgold()
     local copper=$(($1 % 100))
     local silver=$(($(($(($1 - copper)) / 100)) % 100))
     local gold=$(($(($(($(($1 - copper)) / 100)) - silver)) / 100))
-
     printf "\e[33m"
     [[ $gold -ne 0 ]] && printf "%dg " "$gold"
     printf "\e[37m"
-    [[ $silver -ne 0 ]] && printf "%ds " "$silver"
+    [[ $1 -ge 100 ]] && ([[ $1 -ge 10000 ]] && printf "%02ds " "$silver" || printf "%ds " "$silver")
     printf "\e[31m"
-    [[ $copper -ne 0 ]] && printf "%dc" "$copper"
+    [[ $1 -ge 100 ]] && printf "%02dc" "$copper" || printf "%dc" "$copper"
     printf "\e[0m"
 }
 
@@ -53,7 +52,7 @@ function getSaleBuyList()
             jq -r ".[] | select(.id == $curr)| .sells.unit_price")
 
         thisprice=$((count * price))
-        printf "%-4s %-40s %-32s each:%-32s buyorder: %-32s sell: %-32s\n" \
+        printf "%-4s %-40s %32s each:%32s buyorder: %32s sell: %32s\n" \
             "${amount[$i]}x" \
             "$name" \
             "$(printgold "$thisprice")" \
