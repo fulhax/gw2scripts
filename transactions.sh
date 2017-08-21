@@ -53,7 +53,7 @@ function getSaleBuyList()
             jq -r ".[] | select(.id == $curr)| .sells.unit_price")
 
         thisprice=$((count * price))
-        printf "%-4s %-40s %-30s each:%-30s buyorder: %-30s sell: %-30s\n" \
+        printf "%-4s %-40s %-32s each:%-32s buyorder: %-32s sell: %-32s\n" \
             "${amount[$i]}x" \
             "$name" \
             "$(printgold "$thisprice")" \
