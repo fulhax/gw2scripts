@@ -27,7 +27,6 @@ function getSaleBuyList()
 
     apikey=$(cat gw2apikey)
     buys=$(curl "https://api.guildwars2.com/v2/commerce/transactions/${1}?access_token=${apikey}" 2>/dev/null)
-    echo "$buys" > lastbuysfile
     prices=($(echo "${buys}" | jq '.[].price'))
     amount=($(echo "${buys}" | jq '.[].quantity'))
     itemid=($(echo "${buys}" | jq '.[].item_id'))
@@ -66,6 +65,38 @@ function getSaleBuyList()
     echo "total $(printgold $total)"
 }
 
+function getDelivery()
+{
+
+    apikey=$(cat gw2apikey)
+    delivery=$(curl "https://api.guildwars2.com/v2/commerce/delivery?access_token=${apikey}" 2>/dev/null)
+    coins=$(echo "${delivery}" | jq '.coins')
+    amount=($(echo "${delivery}" | jq '.items[].count'))
+    itemid=($(echo "${delivery}" | jq '.items[].id'))
+    if [[ $coins -ne 0 || ${#itemid[@]} -ne 0 ]]; then
+        l="$(printf "=%.0s" {1..80})"
+        printf "%s\n%s\n%s\n" "$l" "waiting for pickup" "$l"
+    fi
+
+    search=$(join , "${itemid[@]}" | uniq)
+
+    items=$(curl "https://api.guildwars2.com/v2/items?ids=$search" 2>/dev/null)
+    IFS=$'\n'
+
+    for (( i = 0; i < "${#itemid[@]}"; i++ )); do
+        curr=${itemid[$i]}
+        name=$(echo "$items" | jq -r ".[] | select(.id == $curr)| .name")
+        count=${amount[$i]}
+        printf "%-4s %-40s\n" \
+            "${amount[$i]}x" \
+            "$name"
+
+    done
+    if [[ $coins -ne 0 ]]; then
+        echo "$(printgold $coins)"
+    fi
+}
+
 function printhelp
 {
     echo "valid options"
@@ -74,7 +105,7 @@ function printhelp
     echo "-b = show bought/buy orders"
 }
 
-[[ $# -eq 0 ]] && printhelp
+[[ $# -eq 0 ]] && printhelp && exit 0
 
 scope="history"
 while getopts "hcsb" c;do
@@ -111,3 +142,4 @@ fi
 if [[ $showbuys -eq 1 ]]; then
     getSaleBuyList "${scope}/buys"
 fi
+getDelivery
